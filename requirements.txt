@@ -1,0 +1,11 @@
+cell2location @ git+https://github.com/BayraktarLab/cell2location.git@a65d67b216d9d9e455743fef1e1feed25f65c4b2
+matplotlib==3.5.2
+matplotlib-inline==0.1.3
+matplotlib-scalebar==0.8.1
+numpy==1.22.4
+pandas==1.4.3
+pyreadr==0.4.6
+scanpy==1.9.1
+seaborn==0.11.2
+squidpy==1.2.2
+scipy==1.8.1
