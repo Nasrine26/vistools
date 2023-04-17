@@ -37,3 +37,14 @@ def plot_spatial_scalebar(adata, markers2plot):
 
     scalebar = ScaleBar(pix_size, units="um", length_fraction=0.25, frameon=False, location='lower right')
     ax.add_artist(scalebar)
+    
+# identify spot locations to crop near tissue
+def get_crop_coord(adata):
+
+    crop_max = (adata.obsm['spatial'] * list(adata.uns['spatial'].values())[0]['scalefactors']['tissue_hires_scalef']).max(axis=0)
+    crop_min = (adata.obsm['spatial'] * list(adata.uns['spatial'].values())[0]['scalefactors']['tissue_hires_scalef']).min(axis=0)
+
+    crop_x = [crop_min[0]-0, crop_max[0]+0]
+    crop_y = [crop_min[1]-0, crop_max[1]+0]
+
+    return crop_x, crop_y

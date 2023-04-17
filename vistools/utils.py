@@ -1,5 +1,12 @@
 import scanpy as sc
 import numpy as np
+import anndata
+import pandas as pd
+from pathlib import Path
+import scipy
+from typing import Union, Dict
+from matplotlib.image import imread
+import json
 
 def read_and_qc(path, count_file_prefix='', sample_name=None):
     r""" This function reads the data for one 10X spatial experiment into the anndata object.
@@ -61,3 +68,85 @@ def select_slide(adata, s, batch_key="sample"):
     slide.uns["spatial"] = {s_spatial: slide.uns["spatial"][s_spatial]}
 
     return slide
+
+def adata_2_visium(adata: anndata.AnnData,
+                   path: Union[str, Path],
+                   library_id: str = None,
+                  ) -> anndata.AnnData:
+    
+    r"""
+    Creates a visium anndata from an adata.Anndata h5ad annotated count matrix file and 10X-Genomics-formatted visium data directory. 
+    The function requires a `spatial` folder where images, scale factors and coordinates can be found. 
+    This folder structure is based on the Space Ranger output. 
+    Structure of folder should resemble the Space Ranger output for Visium 10X Genomics data.
+    
+    :param adata: Anndata. The .h5ad annotated data matrix, where spots are identified by their barcodes (rows) and genes by their gene name (columns)
+    :param path: Path to directory storing visium files. 
+    :param library_id: Identifier for the visium library. 
+    
+    Inspired from https://github.com/scverse/scanpy/blob/ed3b277b2f498e3cab04c9416aaddf97eec8c3e2/scanpy/readwrite.py#L389
+    
+    """
+    # change path to Path if str
+    path = Path(path)
+    
+    # files needed for spatial
+    files = dict(
+        tissue_positions_file = path / "spatial/tissue_positions_list.csv",
+        scalefactors_json_file = path / "spatial/scalefactors_json.json",
+        hires_image = path / "spatial/tissue_hires_image.png",
+        lowres_image = path / "spatial/tissue_lowres_image.png"
+    )
+    
+    # create adata.uns['spatial'][<library_id>] slot, where spatial info referring to tissue image is stored
+    # follow scanpy structure 
+    adata.uns["spatial"] = dict()
+    adata.uns["spatial"][library_id] = dict()
+    
+    # create key slot for images
+    adata.uns["spatial"][library_id]["images"] = dict()
+    
+    # read in images
+    for res in ["hires", "lowres"]:
+        try:
+            img = imread(str(files[f"{res}_image"]))
+            adata.uns["spatial"][library_id]["images"][res] = img
+            
+        except Exception:
+            raise OSError(f"Could not find '{res}_image'")
+            
+    # store image path in meta aka path to the high-resolution tissue image
+    adata.uns["spatial"][library_id]["metadata"] = dict()
+    source_image_path = str(files["hires_image"])
+    adata.uns["spatial"][library_id]["metadata"]["source_image_path"] = source_image_path
+    
+    
+    # read scale factors from json file
+    scalefactors = json.loads(files["scalefactors_json_file"].read_bytes())
+    adata.uns["spatial"][library_id]["scalefactors"] = scalefactors
+    
+    # read coordinates from csv file
+    positions = pd.read_csv(files['tissue_positions_file'], header=None)
+    
+    
+    positions.columns = [
+        'barcode',
+        'in_tissue',
+        'array_row',
+        'array_col',
+        'pxl_col_in_fullres',
+        'pxl_row_in_fullres'
+    ]
+    
+    positions.index = positions['barcode']
+
+    adata.obs = adata.obs.merge(positions, how="left", left_index=True, right_index=True)
+
+    adata.obsm['spatial'] = adata.obs[['pxl_row_in_fullres', 'pxl_col_in_fullres']].to_numpy()
+
+    adata.obs.drop(columns=['barcode', 'pxl_row_in_fullres', 'pxl_col_in_fullres'], inplace=True)
+    
+    return adata
+
+
+
