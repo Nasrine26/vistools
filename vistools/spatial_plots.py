@@ -3,6 +3,7 @@ import squidpy as sq
 import matplotlib.pyplot as plt
 from matplotlib_scalebar.scalebar import ScaleBar
 
+
 def get_pixel_size_visium(adata, library_id, spot_diameter_real = 55, img='lowres'):
     '''
     Utility function to get size of pixels from visium image in AnnData.
@@ -26,6 +27,7 @@ def get_pixel_size_visium(adata, library_id, spot_diameter_real = 55, img='lowre
     pixel_size_real = spot_diameter_real/spot_diameter_img
     return(pixel_size_real)
 
+
 def plot_spatial_scalebar(adata, markers2plot):
     lib_id = [x for x in adata.uns['spatial'].keys()][0]
     pix_size = get_pixel_size_visium(adata=adata, library_id=lib_id)
@@ -37,6 +39,7 @@ def plot_spatial_scalebar(adata, markers2plot):
 
     scalebar = ScaleBar(pix_size, units="um", length_fraction=0.25, frameon=False, location='lower right')
     ax.add_artist(scalebar)
+
     
 # identify spot locations to crop near tissue
 def get_crop_coord(adata):
