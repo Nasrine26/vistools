@@ -393,11 +393,12 @@ def plot_spatial(adata, color, img_key="hires", show_img=True, colordict_celltyp
     'yellow' 'orange' 'blue' 'green' 'purple' 'grey' 'white'
 
     :param adata: adata object with spatial coordinates in adata.obsm['spatial']
-    :param color: list of adata.obs column names to be plotted
+    :param color: list of adata.obs column names to be plotted, can use the same value for defining 'labels' argument
     :param img_key: key of stored image in adata.uns['spatial']
     :param show_img: show image boolean
-    :param colordict_celltype_rgb: dictionary with up to 7 cell types, keys are cell type name and value is tuple with RGB values
-    :param kwargs: arguments to plot_spatial_general
+    :param colordict_celltype_rgb: dictionary with up to 7 cell types, keys are cell type name and value is tuple with RGB values,
+    when using custom color need to define argument reorder_cmap=range(len(mycolor_dict.keys())) to say how many cell types to plot
+    :param kwargs: arguments to plot_spatial_general, see them for more detail, in particular need to define 'labels' argument
     :return: matplotlib figure
     """
 
